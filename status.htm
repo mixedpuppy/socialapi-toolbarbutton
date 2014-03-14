@@ -1,0 +1,85 @@
+<html x-manifest="appcache.manifest">
+<head>
+	<title>DemoSocialService</title>
+<link id="siteicon" rel="icon" href="./firefox.png"/>
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+<script>
+var baselocation = location.href.substr(0, location.href.indexOf("sidebar.htm"));
+
+// The status panel is loaded when the user first clicks on the button, and
+// unloaded when the user quits the Firefox session. They may reopen the panel
+// at any time, you'll need to use the visibility APIs below to detect when they
+// do that.
+
+// testing the standard HTML5 Visibility API
+// https://developer.mozilla.org/en-US/docs/DOM/Using_the_Page_Visibility_API
+function onVisibilityChange() {
+  dump("onVisibilityChange, document hidden?"+document.hidden+"\n");
+}
+window.addEventListener("load", function() {
+  onVisibilityChange();
+});
+document.addEventListener("visibilitychange", function() {
+  onVisibilityChange()
+});
+
+// frameShow/Hide will eventually be deprecated, though some social panels work
+// best with this right now, see the visibility api above, these event handlers
+// demonstrate that document.visibilityState will contain the same value as
+// mozSocial.isVisible
+window.addEventListener("socialFrameShow", function(e) {
+  dump("socialFrameShow, visibility is "+document.visibilityState+" or "+navigator.mozSocial.isVisible+"\n");
+}, false);
+window.addEventListener("socialFrameHide", function(e) {
+  dump("socialFrameHide, visibility is "+document.visibilityState+" or "+navigator.mozSocial.isVisible+"\n");
+}, false);
+
+// ask the worker to update our icon every second...eventually we need to use
+// updates to the site icon for this which would make things simpler.
+var ICON="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAC7ElEQVQ4jW2TS28bZRSGn7l4xnfHTopNLlYToC1JqMQlIHFRRDdISKWLClFVbIBFfwLsu0GVqi5asegCNiyQ2FCkgqIiVC4toYtCEijNDYckbjKO7x57xjOe72OR0lA1Z3n0nkdH57yvwj4lg0BWWi5OIDFCOjEzRNzUlP20jzRn59bEj1ZHGRrLMZo0iZo6dV+wVbDkq/k0I9mU+n+9CiB7rnA2fhNnL38nTl2eIzBUJswG6XQUI2wQT4RZN8J8fWuWO7/MCK/VFP8BdIDe1iqlC8fJ1Cc5OzxJ/qtPKJy5SFqA4guW6y5rTYVkXcMcmGHlm18Jum2hmTF1F9CwMHqbvJ0o4VevUWYUZ/Emtt+hOvIMDUVF74txx08jDY2B7Dzd+u29DYK7V/Cq4CPBDJPKCA6sfcuXFZ0V5RBus0Op1mWhYPNDT/L+sQDJ0i5AdhuyfP51elIB04BonMhglkvJ01xPvURiaYfSYkFWKk20Ro2D412k61Nenb0P8Fz8WgNCBr4Wpni7xNXWu1x5Ooe0a/R8H2E16d7bJOQ7PDFcQqHBcuH+EaXU6bR0BCqi1yMTl7yZ+4uS8yeDTp2JrMNnkTF+qtq8mLSIe0X8cpHD+fTuG7VkvyIyU6K17YhIQhO5pzQxVrnGh1sf8V7lHJ35BUr36girw6mxP+gPVnBX/yYcfWXviKnpkyx+8TmhtIeeHyDcp3JjcZBLGy9zqxEH9wbvHPF5a3ydTnGbwpxCdmJqz4lB1w1ufnCS8s9XOTSdIpaNqkZUZ7OV5B+rzWOxshzP2+jpBJ7dwkq9wdEzM+pDVq6vF4LvT59ALc6Tfy6qJh+PYkYEIc1D+J5UwgI9KRC5F0gf/xQjM6k+sDJAdChP/uOL2EePsbnQYWe+TGejil+zwfOw3R5z1jTbT557MPxImFrtdnB3aQlr9rrK8u+E3R3UWATlQL9k+Ah9h1/j2eenHgrTvhFtu13Zats4jgsSRkeG9tUB/AvjNVepPwFrSQAAAABJRU5ErkJggg==";
+var c = 1;
+var image = ICON;
+setInterval(function () {
+  var worker = navigator.mozSocial.getWorker();
+  var port = worker.port;
+
+  if (c < 10)
+    c++
+  else
+    c = 0;
+  if (image == ICON) {
+    var loc = location.href;
+    var baseurl = loc.substring(0,loc.lastIndexOf('/'));
+    image = baseurl + "/firefox32.png";
+  }
+  else
+    image = ICON;
+
+  // A panel cannot normally send this message, on the worker can, however you
+  // can see in worker.js where we reflect this message to firefox.
+  port.postMessage({
+      topic: 'social.ambient-notification',
+      data: {
+        name: "panel1",
+        iconURL: image,
+        counter: c,
+        label: "Test Ambient 1",
+      }
+    });  
+}, 1000)
+
+// There are a few special APIs on navigator.mozSocial documented at
+// https://developer.mozilla.org/en-US/docs/Web/API/navigator.mozSocial
+// otherwise, it's just HTML, have fun!
+</script>
+</head>
+<body>
+
+
+<p>SocialAPI Simple Toolbarbutton Example.</p>
+
+<p>The rest is just HTML!</p>
+
+</body>
+</html>
